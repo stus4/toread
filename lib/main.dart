@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:toread/items.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/gestures.dart';
 
 void main() => runApp(MyApp());
 
@@ -46,7 +47,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         Text(
                           item['header'],
                           style: TextStyle(
-                              fontSize: 30.0,
+                              fontSize: 40.0,
                               fontWeight: FontWeight.w300,
                               color: Color(0XFF3F3D56),
                               height: 2.0),
@@ -119,13 +120,34 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     }
   }
 
+  void _onScroll(PointerSignalEvent event) {
+    if (event is PointerScrollEvent) {
+      if (event.scrollDelta.dy > 0) {
+        if (currentPage < slides.length - 1) {
+          _pageViewController.nextPage(
+            duration: Duration(milliseconds: 300),
+            curve: Curves.ease,
+          );
+        }
+      } else if (event.scrollDelta.dy < 0) {
+        if (currentPage > 0) {
+          _pageViewController.previousPage(
+            duration: Duration(milliseconds: 300),
+            curve: Curves.ease,
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: RawKeyboardListener(
         focusNode: FocusNode(),
         onKey: _onKey,
-        child: Container(
+        child: Listener(
+          onPointerSignal: _onScroll,
           child: Stack(
             children: <Widget>[
               PageView.builder(
