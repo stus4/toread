@@ -40,7 +40,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               color: Color(0XFF633A14),
                               height: 2.0),
                           maxLines: 1, // максимальна кількість рядків
-                          minFontSize: 20, // мінімальний розмір шрифту
+                          minFontSize: 24, // мінімальний розмір шрифту
                         ),
                         AutoSizeText(
                           item['description'],
@@ -51,7 +51,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               height: 1.3),
                           textAlign: TextAlign.center,
                           maxLines: 3, // максимальна кількість рядків
-                          minFontSize: 18, // мінімальний розмір шрифту
+                          minFontSize: 16, // мінімальний розмір шрифту
                         ),
                       ],
                     ),
