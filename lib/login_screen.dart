@@ -3,6 +3,7 @@ import 'home_screen.dart'; // Імпортуємо HomeScreen
 import 'app_styles.dart'; // Імпортуємо всі стилі
 import 'colors.dart';
 import 'RegistrationScreen.dart'; // Імпортуємо екран реєстрації
+import 'auth_service.dart'; // Імпортуємо AuthService
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -13,14 +14,41 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool isLoading = false;
+  String? error;
 
-  void _login() {
+  void _login() async {
     if (_formKey.currentState!.validate()) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-            builder: (context) => HomeScreen()), // Викликаємо HomeScreen
-      );
+      setState(() {
+        isLoading = true;
+        error = null; // очищаємо попередні помилки
+      });
+
+      try {
+        final success = await AuthService().login(
+          _emailController.text,
+          _passwordController.text,
+        );
+
+        if (success) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    HomeScreen()), // Перехід на HomeScreen після успішного входу
+          );
+        } else {
+          setState(() {
+            error = 'Невірний логін або пароль';
+            isLoading = false;
+          });
+        }
+      } catch (e) {
+        setState(() {
+          error = 'Помилка: $e';
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -68,16 +96,21 @@ class _LoginScreenState extends State<LoginScreen> {
                 },
               ),
               SizedBox(height: 30.0),
-              ElevatedButton(
-                onPressed: _login,
-                style: AppStyles.elevatedButtonStyle,
-                child: Text('Увійти'),
-              ),
+              isLoading
+                  ? CircularProgressIndicator() // Показуємо індикатор завантаження під час авторизації
+                  : ElevatedButton(
+                      onPressed: _login,
+                      style: AppStyles.elevatedButtonStyle,
+                      child: Text('Увійти'),
+                    ),
+              SizedBox(height: 20.0),
+              error != null
+                  ? Text(error!, style: TextStyle(color: Colors.red))
+                  : SizedBox(),
               SizedBox(height: 20.0),
               TextButton(
                 onPressed: () {
                   // Перехід на сторінку відновлення паролю
-                  // Ви можете додати сторінку для відновлення паролю
                   showDialog(
                     context: context,
                     builder: (context) {

@@ -16,6 +16,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _usernameController = TextEditingController();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
+  final _dateController = TextEditingController(); // Контролер для дати
+
   DateTime? _selectedDate;
 
   Future<void> _selectDate(BuildContext context) async {
@@ -28,17 +30,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
+        _dateController.text = '${picked.day}/${picked.month}/${picked.year}';
       });
     }
   }
 
   void _register() {
     if (_formKey.currentState!.validate()) {
-      // Логіка для реєстрації користувача
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Реєстрація успішна!')),
       );
-      Navigator.pop(context); // Повертаємося на екран входу
+      Navigator.pop(context);
     }
   }
 
@@ -47,10 +49,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Реєстрація'),
-        backgroundColor: AppColors.anotherbrown, // Колір AppBar
+        backgroundColor: AppColors.anotherbrown,
       ),
       body: SingleChildScrollView(
-        // Додаємо прокручування
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Form(
@@ -58,7 +59,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[
-                // Поле для введення username
                 TextFormField(
                   controller: _usernameController,
                   decoration: AppStyles.inputDecoration.copyWith(
@@ -73,7 +73,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   },
                 ),
                 SizedBox(height: 20.0),
-                // Поле для введення імені
                 TextFormField(
                   controller: _firstNameController,
                   decoration: AppStyles.inputDecoration.copyWith(
@@ -88,7 +87,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   },
                 ),
                 SizedBox(height: 20.0),
-                // Поле для введення прізвища
                 TextFormField(
                   controller: _lastNameController,
                   decoration: AppStyles.inputDecoration.copyWith(
@@ -103,7 +101,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   },
                 ),
                 SizedBox(height: 20.0),
-                // Поле для введення електронної пошти
                 TextFormField(
                   controller: _emailController,
                   decoration: AppStyles.inputDecoration.copyWith(
@@ -119,7 +116,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   },
                 ),
                 SizedBox(height: 20.0),
-                // Поле для введення паролю
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
@@ -133,7 +129,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   },
                 ),
                 SizedBox(height: 20.0),
-                // Поле для підтвердження паролю
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: true,
@@ -152,28 +147,21 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   },
                 ),
                 SizedBox(height: 20.0),
-                // Поле для вибору дати народження
-                InkWell(
-                  onTap: () => _selectDate(context),
-                  child: AbsorbPointer(
-                    child: TextFormField(
-                      decoration: AppStyles.inputDecoration.copyWith(
-                        labelText: 'Дата народження',
-                        prefixIcon: Icon(Icons.calendar_today),
-                        hintText: _selectedDate != null
-                            ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
-                            : 'Виберіть дату',
-                      ),
-                      validator: (value) {
-                        String? error =
-                            FormValidation.validateAge(_selectedDate);
-                        return error;
-                      },
-                    ),
+                TextFormField(
+                  controller: _dateController,
+                  decoration: AppStyles.inputDecoration.copyWith(
+                    labelText: 'Дата народження',
+                    prefixIcon: Icon(Icons.calendar_today),
+                    hintText: 'Виберіть дату',
                   ),
+                  readOnly: true,
+                  onTap: () => _selectDate(context),
+                  validator: (value) {
+                    String? error = FormValidation.validateAge(_selectedDate);
+                    return error;
+                  },
                 ),
                 SizedBox(height: 30.0),
-                // Вставляємо кнопку реєстрації
                 ElevatedButton(
                   onPressed: _register,
                   style: AppStyles.elevatedButtonStyle,
