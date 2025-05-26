@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'database_service.dart'; // імпортуємо новий файл
+//import 'database_service.dart'; // імпортуємо новий файл
 import 'welcome_screen.dart';
 
 void main() {

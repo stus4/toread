@@ -21,21 +21,21 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() {
         isLoading = true;
-        error = null; // очищаємо попередні помилки
+        error = null;
       });
 
       try {
-        final success = await AuthService().login(
+        final userId = await AuthService().login(
           _emailController.text,
           _passwordController.text,
         );
 
-        if (success) {
+        if (userId != null) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-                builder: (context) =>
-                    HomeScreen()), // Перехід на HomeScreen після успішного входу
+              builder: (context) => HomeScreen(userId: userId),
+            ),
           );
         } else {
           setState(() {
