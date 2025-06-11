@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:toread/models/recommendation.dart';
 import 'create_work_screen.dart';
 import 'history_screen.dart';
+import 'search.dart';
 
 // Заглушка для екрана сповіщень
 class NotificationsScreen extends StatelessWidget {
@@ -248,7 +249,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 1:
         return Center(child: Text("Ідеї"));
       case 2:
-        return Center(child: Text("Пошук"));
+        return SearchPage();
       case 3:
         return CreateWorkScreen();
       case 4:
