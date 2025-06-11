@@ -11,6 +11,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Перевірка БД',
+      theme: ThemeData(
+        fontFamily: 'Roboto', // або інший шрифт, який підтримує кирилицю
+      ),
       home: WelcomeScreen(),
     );
   }

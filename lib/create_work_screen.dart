@@ -1,6 +1,7 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'chapter_input_page.dart';
 
 class CreateWorkScreen extends StatefulWidget {
   @override
@@ -9,176 +10,250 @@ class CreateWorkScreen extends StatefulWidget {
 
 class _CreateWorkScreenState extends State<CreateWorkScreen> {
   final _formKey = GlobalKey<FormState>();
-  String title = '';
-  String description = '';
-  String status = 'Завершений';
-  String ageLimit = '13+';
-  List<String> genres = [];
-  List<String> tags = [];
-  File? coverImage;
+  final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
 
-  final TextEditingController genreController = TextEditingController();
-  final TextEditingController tagController = TextEditingController();
+  String? selectedCategory;
+  String? selectedStatus;
+  final Set<String> selectedTagIds = {};
 
-  Future<void> pickCoverImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+  List<Map<String, dynamic>> categories = [];
+  List<Map<String, dynamic>> tags = [];
+  List<Map<String, dynamic>> statuses = [];
 
-    if (pickedFile != null) {
-      setState(() {
-        coverImage = File(pickedFile.path);
-      });
-    }
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadFormData();
   }
 
-  void addGenre(String genre) {
-    if (genre.isNotEmpty && !genres.contains(genre)) {
-      setState(() {
-        genres.add(genre);
-        genreController.clear();
-      });
-    }
-  }
+  Future<void> loadFormData() async {
+    try {
+      final responses = await Future.wait([
+        http.get(Uri.parse('http://192.168.1.2:8000/categories')),
+        http.get(Uri.parse('http://192.168.1.2:8000/tags')),
+        http.get(Uri.parse('http://192.168.1.2:8000/work-statuses')),
+      ]);
 
-  void addTag(String tag) {
-    if (tag.isNotEmpty && !tags.contains(tag)) {
-      setState(() {
-        tags.add(tag);
-        tagController.clear();
-      });
-    }
-  }
-
-  void submit() {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      // TODO: Надіслати дані на сервер
-      print("Назва: $title");
-      print("Опис: $description");
-      print("Жанри: $genres");
-      print("Теги: $tags");
-      print("Статус: $status");
-      print("Обмеження: $ageLimit");
-      print("Обкладинка: ${coverImage?.path}");
+      if (responses.every((res) => res.statusCode == 200)) {
+        setState(() {
+          categories = List<Map<String, dynamic>>.from(
+              json.decode(utf8.decode(responses[0].bodyBytes)));
+          tags = List<Map<String, dynamic>>.from(
+              json.decode(utf8.decode(responses[1].bodyBytes)));
+          statuses = List<Map<String, dynamic>>.from(
+              json.decode(utf8.decode(responses[2].bodyBytes)));
+          isLoading = false;
+        });
+      } else {
+        throw Exception("Не вдалося завантажити дані");
+      }
+    } catch (e) {
+      print("Помилка: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Помилка завантаження даних")),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Новий твір')),
-      body: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Назва'),
-                onSaved: (value) => title = value ?? '',
-                validator: (value) => value!.isEmpty ? 'Введіть назву' : null,
-              ),
-              SizedBox(height: 10),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Опис'),
-                maxLines: 3,
-                onSaved: (value) => description = value ?? '',
-              ),
-              SizedBox(height: 10),
-              Row(
-                children: [
-                  coverImage != null
-                      ? Image.file(coverImage!,
-                          width: 100, height: 100, fit: BoxFit.cover)
-                      : Container(
-                          width: 100, height: 100, color: Colors.grey[300]),
-                  SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: pickCoverImage,
-                    child: Text('Завантажити обкладинку'),
-                  ),
-                ],
-              ),
-              SizedBox(height: 20),
-              Text('Жанр'),
-              Wrap(
-                spacing: 8,
-                children: genres.map((g) => Chip(label: Text(g))).toList(),
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: genreController,
-                      decoration: InputDecoration(hintText: 'Доданий жанр'),
+      appBar: AppBar(title: Text("Створити твір")),
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Form(
+                key: _formKey,
+                child: ListView(
+                  children: [
+                    TextFormField(
+                      controller: _titleController,
+                      decoration: InputDecoration(labelText: "Назва твору"),
+                      validator: (value) => (value == null || value.isEmpty)
+                          ? "Введіть назву"
+                          : null,
                     ),
-                  ),
-                  SizedBox(width: 8),
-                  ElevatedButton(
-                      onPressed: () => addGenre(genreController.text),
-                      child: Text('+ Додати')),
-                ],
-              ),
-              SizedBox(height: 20),
-              Text('Теги'),
-              Wrap(
-                spacing: 8,
-                children: tags.map((t) => Chip(label: Text(t))).toList(),
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: tagController,
-                      decoration: InputDecoration(hintText: 'Доданий тег'),
+                    TextFormField(
+                      controller: _descriptionController,
+                      decoration: InputDecoration(labelText: "Опис"),
+                      maxLines: 3,
                     ),
-                  ),
-                  SizedBox(width: 8),
-                  ElevatedButton(
-                      onPressed: () => addTag(tagController.text),
-                      child: Text('+ Додати')),
-                ],
+                    SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      decoration: InputDecoration(labelText: "Жанр"),
+                      value: selectedCategory,
+                      items: categories
+                          .map((cat) => DropdownMenuItem<String>(
+                                value: cat['id'].toString(),
+                                child: Text(cat['name']),
+                              ))
+                          .toList(),
+                      onChanged: (value) =>
+                          setState(() => selectedCategory = value),
+                      validator: (value) =>
+                          value == null ? 'Оберіть жанр' : null,
+                    ),
+                    DropdownButtonFormField<String>(
+                      decoration: InputDecoration(labelText: "Статус"),
+                      value: selectedStatus,
+                      items: statuses
+                          .where((status) =>
+                              status['id'].toString() != '4') // фільтруємо
+                          .map((status) => DropdownMenuItem<String>(
+                                value: status['id'].toString(),
+                                child: Text(status['name']),
+                              ))
+                          .toList(),
+                      onChanged: (value) =>
+                          setState(() => selectedStatus = value),
+                      validator: (value) =>
+                          value == null ? 'Оберіть статус' : null,
+                    ),
+                    SizedBox(height: 16),
+                    TagSelector(tags: tags, selectedTags: selectedTagIds),
+                    SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (_formKey.currentState!.validate()) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ChapterInputPage()),
+                          );
+                        }
+                      },
+                      child: Text("Продовжити"),
+                    ),
+                  ],
+                ),
               ),
-              SizedBox(height: 20),
-              DropdownButtonFormField<String>(
-                value: status,
-                items: ['Завершений', 'В процесі']
-                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                    .toList(),
-                onChanged: (val) => setState(() => status = val!),
-                decoration: InputDecoration(labelText: 'Статус'),
-              ),
-              DropdownButtonFormField<String>(
-                value: ageLimit,
-                items: ['0+', '7+', '13+', '16+', '18+']
-                    .map((a) => DropdownMenuItem(value: a, child: Text(a)))
-                    .toList(),
-                onChanged: (val) => setState(() => ageLimit = val!),
-                decoration: InputDecoration(labelText: 'Вікові обмеження'),
-              ),
-              SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: submit,
-                icon: Icon(Icons.arrow_forward),
-                label: Text('Продовжити'),
-              ),
-            ],
+            ),
+    );
+  }
+}
+
+class TagSelector extends StatefulWidget {
+  final List<Map<String, dynamic>> tags;
+  final Set<String> selectedTags;
+
+  const TagSelector({
+    super.key,
+    required this.tags,
+    required this.selectedTags,
+  });
+
+  @override
+  State<TagSelector> createState() => _TagSelectorState();
+}
+
+class _TagSelectorState extends State<TagSelector> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchText = "";
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchText = _searchController.text.trim().toLowerCase();
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Теги, які вибрані
+    final selectedTagList = widget.tags.where(
+      (tag) => widget.selectedTags.contains(tag['id'].toString()),
+    );
+
+    // Теги, які збігаються з пошуком, але ще не вибрані
+    final filteredTagList = _searchText.isEmpty
+        ? []
+        : widget.tags.where((tag) {
+            final tagId = tag['id'].toString();
+            final tagName = tag['name'].toString().toLowerCase();
+            return tagName.contains(_searchText) &&
+                !widget.selectedTags.contains(tagId);
+          }).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: _searchController,
+          decoration: InputDecoration(
+            labelText: "Пошук тегів",
+            prefixIcon: Icon(Icons.search),
+            border: OutlineInputBorder(),
           ),
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 3, // Створення — 4й пункт (починається з 0)
-        onTap: (index) {
-          // TODO: Навігація
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.lightbulb), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.edit), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
+        const SizedBox(height: 12),
+        // Вибрані теги
+        if (widget.selectedTags.isNotEmpty) ...[
+          Text("Вибрані теги:"),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8.0,
+            children: selectedTagList.map((tag) {
+              final tagId = tag['id'].toString();
+              final tagName = tag['name'];
+              final tagDescription = tag['description'] ?? 'Немає опису';
+
+              return Tooltip(
+                message: tagDescription,
+                waitDuration: Duration(milliseconds: 400),
+                child: FilterChip(
+                  label: Text(tagName),
+                  selected: true,
+                  onSelected: (isSelected) {
+                    setState(() {
+                      widget.selectedTags.remove(tagId);
+                    });
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
         ],
-      ),
+
+        // Пошук
+        if (_searchText.isNotEmpty) ...[
+          Text("Результати пошуку:"),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8.0,
+            children: filteredTagList.map((tag) {
+              final tagId = tag['id'].toString();
+              final tagName = tag['name'];
+              final tagDescription = tag['description'] ?? 'Немає опису';
+
+              return Tooltip(
+                message: tagDescription,
+                waitDuration: Duration(milliseconds: 400),
+                child: FilterChip(
+                  label: Text(tagName),
+                  selected: widget.selectedTags.contains(tagId),
+                  onSelected: (isSelected) {
+                    setState(() {
+                      if (isSelected) {
+                        widget.selectedTags.add(tagId);
+                      } else {
+                        widget.selectedTags.remove(tagId);
+                      }
+                    });
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+        ]
+      ],
     );
   }
 }

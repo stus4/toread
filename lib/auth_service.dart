@@ -6,7 +6,7 @@ class AuthService {
   Future<String?> login(String email, String password) async {
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:8000/login'),
+        Uri.parse('http://192.168.1.2:8000/login'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'email': email,
@@ -22,10 +22,24 @@ class AuthService {
           throw Exception('Сервер не повернув userId');
         }
       } else if (response.statusCode == 401) {
-        final data = json.decode(response.body);
-        throw Exception(data['detail'] ?? 'Невірні логін або пароль');
+        // Обробка 401 — невірні дані
+        try {
+          final data = json.decode(response.body);
+          throw Exception(data['detail'] ?? 'Невірні логін або пароль');
+        } catch (_) {
+          final message = utf8.decode(response.bodyBytes, allowMalformed: true);
+          throw Exception('Помилка авторизації: $message');
+        }
       } else {
-        throw Exception('Сервер повернув помилку: ${response.statusCode}');
+        // Інші коди помилок
+        String message;
+        try {
+          message = json.decode(response.body)['detail'] ?? response.body;
+        } catch (_) {
+          message = utf8.decode(response.bodyBytes, allowMalformed: true);
+        }
+        throw Exception(
+            'Сервер повернув помилку ${response.statusCode}: $message');
       }
     } on SocketException {
       throw Exception(

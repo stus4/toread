@@ -32,7 +32,6 @@ class FormValidation {
     final now = DateTime.now();
     final age = now.year - birthDate.year;
 
-    // Перевіряємо, чи користувач досяг 13 років (мінімальний вік)
     if (age < 13 ||
         (age == 13 && now.month < birthDate.month) ||
         (age == 13 &&

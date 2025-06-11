@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'app_styles.dart'; // Імпортуємо стилі
 import 'colors.dart'; // Імпортуємо кольори
 import 'register_form.dart'; // Імпортуємо файл з валідацією
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class RegistrationScreen extends StatefulWidget {
   @override
@@ -16,7 +18,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _usernameController = TextEditingController();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
-  final _dateController = TextEditingController(); // Контролер для дати
+  final _dateController = TextEditingController();
 
   DateTime? _selectedDate;
 
@@ -24,23 +26,60 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
-      firstDate: DateTime(1900),
+      firstDate: DateTime(1940),
       lastDate: DateTime.now(),
     );
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
-        _dateController.text = '${picked.day}/${picked.month}/${picked.year}';
+        _dateController.text =
+            '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
       });
     }
   }
 
-  void _register() {
+  void _register() async {
     if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Реєстрація успішна!')),
-      );
-      Navigator.pop(context);
+      // Підготовка даних
+      final Map<String, dynamic> data = {
+        "username": _usernameController.text,
+        "name": _firstNameController.text,
+        "last_name": _lastNameController.text,
+        "email": _emailController.text,
+        "password": _passwordController.text,
+        "birth": _dateController.text,
+      };
+
+      try {
+        final response = await http.post(
+          Uri.parse('http://192.168.1.2:8000/register'),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode(data),
+        );
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          // Реєстрація успішна
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Реєстрація успішна!')),
+          );
+          Navigator.pop(context);
+        } else {
+          // Помилка з сервера
+          final Map<String, dynamic> responseData =
+              jsonDecode(utf8.decode(response.bodyBytes));
+          final errorMessage = responseData['detail'] ?? 'Помилка реєстрації';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(errorMessage)),
+          );
+        }
+      } catch (e) {
+        // Помилка при підключенні або інша
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Помилка підключення: $e')),
+        );
+      }
     }
   }
 
