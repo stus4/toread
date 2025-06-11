@@ -5,6 +5,7 @@ import 'package:toread/models/recommendation.dart';
 import 'create_work_screen.dart';
 import 'history_screen.dart';
 import 'search.dart';
+import 'filter_dialog.dart';
 
 // Заглушка для екрана сповіщень
 class NotificationsScreen extends StatelessWidget {
@@ -30,6 +31,8 @@ class _HomeScreenState extends State<HomeScreen> {
   late Future<List<Recommendation>> recommendations;
   late Future<List<Recommendation>> popularWorks;
   int _selectedIndex = 0;
+  String? selectedFilter; // наприклад, жанр або тег
+  String? selectedSort; // наприклад, за популярністю, датою
 
   @override
   void initState() {
@@ -215,11 +218,33 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
 
               // Рекомендоване
+              // Вставити перед Padding з текстом 'Рекомендоване для вас'
               Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text('Рекомендоване для вас',
-                    style: Theme.of(context).textTheme.titleLarge),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                child: Row(
+                  children: [
+                    Text('Рекомендоване для вас',
+                        style: Theme.of(context).textTheme.titleLarge),
+                    Spacer(),
+                    IconButton(
+                      icon: Icon(Icons.filter_list),
+                      tooltip: 'Фільтр',
+                      onPressed: () {
+                        _showFilterDialog();
+                      },
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.sort),
+                      tooltip: 'Сортування',
+                      onPressed: () {
+                        _showSortDialog();
+                      },
+                    ),
+                  ],
+                ),
               ),
+
               FutureBuilder<List<Recommendation>>(
                 future: recommendations,
                 builder: (context, snapshot) {
@@ -257,6 +282,68 @@ class _HomeScreenState extends State<HomeScreen> {
       default:
         return Center(child: Text("Невідома сторінка"));
     }
+  }
+
+  void _showFilterDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return FilterDialog(
+          selectedFilter: selectedFilter,
+          onFilterSelected: (filter) {
+            setState(() {
+              selectedFilter = filter;
+              // Тут можна додати оновлення рекомендацій згідно фільтра
+            });
+          },
+        );
+      },
+    );
+  }
+
+  void _showSortDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Виберіть сортування'),
+          content: SingleChildScrollView(
+            child: Column(
+              children: [
+                ListTile(
+                  title: Text('За популярністю'),
+                  onTap: () {
+                    setState(() {
+                      selectedSort = 'popular';
+                      // Виклик оновлення рекомендацій з сортуванням
+                    });
+                    Navigator.pop(context);
+                  },
+                ),
+                ListTile(
+                  title: Text('За датою'),
+                  onTap: () {
+                    setState(() {
+                      selectedSort = 'date';
+                    });
+                    Navigator.pop(context);
+                  },
+                ),
+                ListTile(
+                  title: Text('Без сортування'),
+                  onTap: () {
+                    setState(() {
+                      selectedSort = null;
+                    });
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
