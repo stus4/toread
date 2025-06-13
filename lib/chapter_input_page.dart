@@ -3,6 +3,8 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'home_screen.dart';
 
 class ChapterInputPage extends StatefulWidget {
   final String workId;
@@ -58,24 +60,43 @@ class ChapterInputPageState extends State<ChapterInputPage> {
       );
       return;
     }
-
+    final prefs = await SharedPreferences.getInstance();
+    final user_id = prefs.getString('user_id');
     try {
+      final uri = Uri.parse('http://192.168.1.2:8000/chapters/').replace(
+        queryParameters: {
+          'user_id': user_id,
+        },
+      );
+
       final response = await http.post(
-        Uri.parse(
-            'http://192.168.1.2:8000/chapters/'), // твоя IP-адреса сервера
-        headers: {'Content-Type': 'application/json'},
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: jsonEncode({
           "work_id": widget.workId,
           "title": title,
-          "text": text,
-          "order_number": 1,
-          "is_draft": false,
+          "content": text,
+          "num": 1, // або видаляєш, якщо модель вже не вимагає
         }),
       );
+
+      print('Status: ${response.statusCode}');
+      print('Response body: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Твір опубліковано!')),
+        );
+
+        // Затримка, щоб SnackBar встиг показатися (опціонально)
+        await Future.delayed(Duration(milliseconds: 500));
+
+        // Переходимо на HomeScreen, замінюючи поточну сторінку
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomeScreen(userId: user_id!)),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
