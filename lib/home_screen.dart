@@ -6,6 +6,7 @@ import 'create_work_screen.dart';
 import 'history_screen.dart';
 import 'search.dart';
 import 'filter_dialog.dart';
+import 'account_screen.dart';
 
 // Заглушка для екрана сповіщень
 class NotificationsScreen extends StatelessWidget {
@@ -278,7 +279,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 3:
         return CreateWorkScreen();
       case 4:
-        return Center(child: Text("Акаунт"));
+        return AccountScreen();
       default:
         return Center(child: Text("Невідома сторінка"));
     }
