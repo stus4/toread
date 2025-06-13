@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'home_screen.dart';
+import 'drafts.dart';
 
 class ChapterInputPage extends StatefulWidget {
   final String workId;
@@ -111,9 +112,9 @@ class ChapterInputPageState extends State<ChapterInputPage> {
     }
   }
 
-  void _saveDraft() async {
-    final text = _chapterController.text.trim();
+  void _saveDraftLocally() async {
     final title = _titleController.text.trim();
+    final text = _chapterController.text.trim();
 
     if (text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -122,33 +123,23 @@ class ChapterInputPageState extends State<ChapterInputPage> {
       return;
     }
 
-    try {
-      final response = await http.post(
-        Uri.parse('http://192.168.1.2:8000/chapters/draft'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'work_id': widget.workId,
-          'title': title,
-          'text': text,
-          'order_number': 1,
-          'is_draft': true,
-        }),
-      );
+    await LocalDraftStorage.saveDraft(widget.workId, title, text);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Чернетку збережено в БД')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Помилка сервера: ${response.statusCode}')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Помилка збереження: $e')),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Чернетку збережено локально')),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDraft();
+  }
+
+  void _loadDraft() async {
+    final draft = await LocalDraftStorage.loadDraft(widget.workId);
+    _titleController.text = draft['title']!;
+    _chapterController.text = draft['text']!;
   }
 
   @override
@@ -186,7 +177,8 @@ class ChapterInputPageState extends State<ChapterInputPage> {
               children: [
                 Expanded(
                   child: ElevatedButton(
-                      onPressed: _saveDraft, child: Text('Зберегти чернетку')),
+                      onPressed: _saveDraftLocally,
+                      child: Text('Зберегти чернетку')),
                 ),
                 SizedBox(width: 10),
                 Expanded(
