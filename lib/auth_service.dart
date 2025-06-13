@@ -1,6 +1,7 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   Future<String?> login(String email, String password) async {
@@ -17,6 +18,8 @@ class AuthService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['success'] == true && data['userId'] != null) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('user_id', data['userId'].toString());
           return data['userId'].toString(); // Повертаємо userId
         } else {
           throw Exception('Сервер не повернув userId');

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'chapter_input_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CreateWorkScreen extends StatefulWidget {
   @override
@@ -12,6 +13,7 @@ class _CreateWorkScreenState extends State<CreateWorkScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _ageLimitController = TextEditingController();
 
   String? selectedCategory;
   String? selectedStatus;
@@ -117,13 +119,55 @@ class _CreateWorkScreenState extends State<CreateWorkScreen> {
                     TagSelector(tags: tags, selectedTags: selectedTagIds),
                     SizedBox(height: 20),
                     ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         if (_formKey.currentState!.validate()) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => ChapterInputPage()),
-                          );
+                          final prefs = await SharedPreferences.getInstance();
+                          final authorId = prefs.getString('user_id');
+
+                          // Збираємо дані для створення твору
+                          final newWorkData = {
+                            'title': _titleController.text,
+                            'description': _descriptionController.text,
+                            'category_id': selectedCategory,
+                            'status_id': selectedStatus,
+                            'tag_ids': selectedTagIds.toList(),
+                            'author_id': authorId, // додано
+                          };
+
+                          try {
+                            final response = await http.post(
+                              Uri.parse(
+                                  'http://192.168.1.2:8000/works/'), // зміни URL на твій endpoint для створення твору
+                              headers: {'Content-Type': 'application/json'},
+                              body: jsonEncode(newWorkData),
+                            );
+
+                            if (response.statusCode == 201 ||
+                                response.statusCode == 200) {
+                              // Сервер повертає JSON з даними створеного твору, серед яких є id
+                              final responseData = jsonDecode(response.body);
+                              final createdWorkId =
+                                  responseData['id'].toString();
+
+                              // Переходимо на сторінку введення розділів, передаючи id створеного твору
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ChapterInputPage(workId: createdWorkId),
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text("Не вдалося створити твір")),
+                              );
+                            }
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("Помилка: $e")),
+                            );
+                          }
                         }
                       },
                       child: Text("Продовжити"),
