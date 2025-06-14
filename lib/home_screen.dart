@@ -7,6 +7,7 @@ import 'history_screen.dart';
 import 'search.dart';
 import 'filter_dialog.dart';
 import 'account_screen.dart';
+import 'work_detail_screen.dart';
 
 // Заглушка для екрана сповіщень
 class NotificationsScreen extends StatelessWidget {
@@ -29,6 +30,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  Recommendation? openedWork;
+
   late Future<List<Recommendation>> recommendations;
   late Future<List<Recommendation>> popularWorks;
   int _selectedIndex = 0;
@@ -87,32 +90,38 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCard(Recommendation recommendation) {
-    return Card(
-      margin: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-      child: ListTile(
-        title: Text(recommendation.title),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Автор: ${recommendation.author}'),
-            Text('Жанри: ${recommendation.genres.join(', ')}'),
-            Text('Теги: ${recommendation.tags.join(', ')}'),
-            Text(recommendation.description),
-            SizedBox(height: 8),
-            // Додаємо відображення кількості
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                _buildStatIcon(Icons.thumb_up, recommendation.likes),
-                SizedBox(width: 16),
-                _buildStatIcon(Icons.visibility, recommendation.views),
-                SizedBox(width: 16),
-                _buildStatIcon(Icons.bookmark, recommendation.saved),
-                SizedBox(width: 16),
-                _buildStatIcon(Icons.menu_book, recommendation.read),
-              ],
-            ),
-          ],
+    return InkWell(
+      onTap: () {
+        setState(() {
+          openedWork = recommendation;
+        });
+      },
+      child: Card(
+        margin: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+        child: ListTile(
+          title: Text(recommendation.title),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Автор: ${recommendation.author}'),
+              Text('Жанри: ${recommendation.genres.join(', ')}'),
+              Text('Теги: ${recommendation.tags.join(', ')}'),
+              Text(recommendation.description),
+              SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  _buildStatIcon(Icons.thumb_up, recommendation.likes),
+                  SizedBox(width: 16),
+                  _buildStatIcon(Icons.visibility, recommendation.views),
+                  SizedBox(width: 16),
+                  _buildStatIcon(Icons.bookmark, recommendation.saved),
+                  SizedBox(width: 16),
+                  _buildStatIcon(Icons.menu_book, recommendation.read),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -373,11 +382,28 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
         ],
+        leading: openedWork != null
+            ? IconButton(
+                icon: Icon(Icons.arrow_back),
+                onPressed: () {
+                  setState(() {
+                    openedWork = null;
+                  });
+                },
+              )
+            : null,
       ),
-      body: _buildBody(),
+      body: openedWork != null
+          ? WorkDetailScreen(work: openedWork!)
+          : _buildBody(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
+        onTap: (index) {
+          setState(() {
+            openedWork = null; // Закриваємо деталі, якщо була відкрита
+            _onItemTapped(index);
+          });
+        },
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
