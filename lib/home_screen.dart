@@ -167,55 +167,61 @@ class _HomeScreenState extends State<HomeScreen> {
                         itemCount: snapshot.data!.length,
                         itemBuilder: (context, index) {
                           final recommendation = snapshot.data![index];
-                          return Container(
-                            width: 300,
-                            margin: EdgeInsets.symmetric(horizontal: 8.0),
-                            child: Card(
-                              elevation: 3,
-                              child: Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(recommendation.title,
-                                        style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold)),
-                                    SizedBox(height: 4),
-                                    Text('Автор: ${recommendation.author}'),
-                                    Text(
-                                        'Жанри: ${recommendation.genres.join(', ')}'),
-                                    Text(
-                                        'Теги: ${recommendation.tags.join(', ')}'),
-                                    SizedBox(height: 4),
-                                    Expanded(
-                                      child: Text(
-                                        recommendation.description,
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 4,
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                openedWork = recommendation;
+                              });
+                            },
+                            child: Container(
+                              width: 300,
+                              margin: EdgeInsets.symmetric(horizontal: 8.0),
+                              child: Card(
+                                elevation: 3,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(recommendation.title,
+                                          style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold)),
+                                      SizedBox(height: 4),
+                                      Text('Автор: ${recommendation.author}'),
+                                      Text(
+                                          'Жанри: ${recommendation.genres.join(', ')}'),
+                                      Text(
+                                          'Теги: ${recommendation.tags.join(', ')}'),
+                                      SizedBox(height: 4),
+                                      Expanded(
+                                        child: Text(
+                                          recommendation.description,
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 4,
+                                        ),
                                       ),
-                                    ),
-
-                                    // Ось цей блок додаємо:
-                                    SizedBox(height: 8),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        _buildStatIcon(Icons.thumb_up,
-                                            recommendation.likes),
-                                        SizedBox(width: 12),
-                                        _buildStatIcon(Icons.visibility,
-                                            recommendation.views),
-                                        SizedBox(width: 12),
-                                        _buildStatIcon(Icons.bookmark,
-                                            recommendation.saved),
-                                        SizedBox(width: 12),
-                                        _buildStatIcon(Icons.menu_book,
-                                            recommendation.read),
-                                      ],
-                                    ),
-                                  ],
+                                      SizedBox(height: 8),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          _buildStatIcon(Icons.thumb_up,
+                                              recommendation.likes),
+                                          SizedBox(width: 12),
+                                          _buildStatIcon(Icons.visibility,
+                                              recommendation.views),
+                                          SizedBox(width: 12),
+                                          _buildStatIcon(Icons.bookmark,
+                                              recommendation.saved),
+                                          SizedBox(width: 12),
+                                          _buildStatIcon(Icons.menu_book,
+                                              recommendation.read),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
