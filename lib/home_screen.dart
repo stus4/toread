@@ -91,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCard(Recommendation recommendation) {
-    return InkWell(
+    return GestureDetector(
       onTap: () {
         setState(() {
           openedWork = recommendation;

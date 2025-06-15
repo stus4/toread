@@ -17,6 +17,7 @@ class WorkDetailScreen extends StatefulWidget {
 class _WorkDetailScreenState extends State<WorkDetailScreen> {
   late int likes;
   late int saved;
+  late int views;
   late bool isLiked;
   late bool isSaved;
   String? userId;
@@ -26,6 +27,8 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
     super.initState();
     likes = widget.work.likes;
     saved = widget.work.saved;
+    views = widget.work.views; // ініціалізація
+
     isLiked = false; // або отримати з API
     isSaved = false; // або отримати з API
     // <- завантажує стан
@@ -46,9 +49,6 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
   }
 
   Future<void> markAsViewed() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('user_id');
-
     if (userId == null) {
       print('user_id is null!');
       return;
@@ -62,6 +62,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
 
     if (response.statusCode == 200) {
       print('Перегляд записано');
+      await fetchUserInteraction();
     } else {
       print('Помилка при записі перегляду: ${response.statusCode}');
     }
@@ -79,6 +80,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
       setState(() {
         likes = data['likes'];
         saved = data['saved'];
+        views = data['views'];
         isLiked = data['is_liked'];
         isSaved = data['is_saved'];
       });
@@ -101,13 +103,10 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(userId),
     );
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
 
-      setState(() {
-        isLiked = data['user_liked']; // оновлюємо статус лайку
-        likes = data['likes']; // оновлюємо кількість лайків
-      });
+    if (response.statusCode == 200) {
+      // Після лайку оновити повністю статус взаємодії
+      await fetchUserInteraction();
     } else {
       print('Помилка при лайкуванні: ${response.statusCode}');
     }
@@ -120,10 +119,8 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
     );
 
     if (response.statusCode == 200) {
-      setState(() {
-        isSaved = !isSaved;
-        saved += isSaved ? 1 : -1;
-      });
+      // Оновлюємо повністю статус з сервера
+      await fetchUserInteraction();
     }
   }
 
@@ -194,7 +191,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                   isLiked,
                 ),
                 SizedBox(width: 16),
-                _buildStatDisplay(Icons.visibility, widget.work.views),
+                _buildStatDisplay(Icons.visibility, views),
                 SizedBox(width: 16),
                 _buildStatButton(
                   Icons.bookmark,
