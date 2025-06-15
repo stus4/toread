@@ -9,6 +9,7 @@ import 'filter_dialog.dart';
 import 'account_screen.dart';
 import 'work_detail_screen.dart';
 import 'config.dart';
+import 'profile.dart';
 
 // Заглушка для екрана сповіщень
 class NotificationsScreen extends StatelessWidget {
@@ -388,6 +389,17 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
+          if (_selectedIndex == 4)
+            IconButton(
+              icon: Icon(Icons.account_circle),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => ProfilePage(userId: widget.userId)),
+                );
+              },
+            ),
         ],
         leading: openedWork != null
             ? IconButton(
