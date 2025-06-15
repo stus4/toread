@@ -296,7 +296,9 @@ class _HomeScreenState extends State<HomeScreen> {
       case 3:
         return CreateWorkScreen();
       case 4:
-        return AccountScreen();
+        return AccountScreen(
+          userId: widget.userId,
+        );
       default:
         return Center(child: Text("Невідома сторінка"));
     }

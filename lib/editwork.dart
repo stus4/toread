@@ -16,25 +16,44 @@ class _EditWorkPageState extends State<EditWorkPage> {
   late TextEditingController titleController;
   late TextEditingController descriptionController;
   late TextEditingController tagsController;
+  TextEditingController? coverPathController;
+
+  TextEditingController? filePathController;
+  TextEditingController? ageLimitController;
+  int? selectedStatusId;
 
   List<Map<String, dynamic>> categories = [];
   int? selectedCategoryId;
   List<dynamic> chapters = [];
 
+  bool isLoadingCategories = true;
+
   @override
   void initState() {
     super.initState();
-
-    // Ініціалізуємо контролери з даних твору
     titleController = TextEditingController(text: widget.work['title'] ?? '');
     descriptionController =
         TextEditingController(text: widget.work['description'] ?? '');
+    coverPathController =
+        TextEditingController(text: widget.work['cover_path'] ?? '');
+    filePathController =
+        TextEditingController(text: widget.work['file_path'] ?? '');
+    ageLimitController = TextEditingController(
+        text: widget.work['age_limit']?.toString() ?? '0');
 
-    // Теги з List<dynamic>? перетворюємо у рядок через кому
-    final tagsList = widget.work['tags'] as List<dynamic>?;
-    tagsController = TextEditingController(text: tagsList?.join(', ') ?? '');
+    // Безпечна ініціалізація selectedStatusId
+    selectedStatusId = null;
+    final status = widget.work['status'];
+    if (status != null && status is Map) {
+      final statusIdRaw = status['id'];
+      if (statusIdRaw is int) {
+        selectedStatusId = statusIdRaw;
+      } else if (statusIdRaw is String) {
+        selectedStatusId = int.tryParse(statusIdRaw);
+      }
+    }
 
-    // Обробка категорії
+    // Безпечна ініціалізація selectedCategoryId
     selectedCategoryId = null;
     final category = widget.work['category'];
     if (category != null && category is Map) {
@@ -46,7 +65,9 @@ class _EditWorkPageState extends State<EditWorkPage> {
       }
     }
 
-    // Розділи твору
+    final tagsList = widget.work['tags'] as List<dynamic>?;
+    tagsController = TextEditingController(text: tagsList?.join(', ') ?? '');
+
     chapters = widget.work['chapters'] ?? [];
 
     fetchCategories();
@@ -77,9 +98,19 @@ class _EditWorkPageState extends State<EditWorkPage> {
               })
               .where((cat) => cat['id'] != 0)
               .toList();
+          // Якщо selectedCategoryId не null, перевіряємо чи є він в categories
+          if (selectedCategoryId != null &&
+              !categories.any((cat) => cat['id'] == selectedCategoryId)) {
+            selectedCategoryId = null; // або можна вибрати перший елемент
+          }
+
+          isLoadingCategories = false;
         });
       } else {
         print('Помилка завантаження категорій: статус ${response.statusCode}');
+        setState(() {
+          isLoadingCategories = false;
+        });
       }
     } catch (e) {
       print('Помилка завантаження категорій: $e');
@@ -89,26 +120,44 @@ class _EditWorkPageState extends State<EditWorkPage> {
   @override
   void dispose() {
     titleController.dispose();
-    descriptionController.dispose();
-    tagsController.dispose();
+    descriptionController?.dispose();
+    tagsController?.dispose();
+    coverPathController?.dispose();
+
+    filePathController?.dispose();
+    ageLimitController?.dispose();
+
     super.dispose();
   }
 
   void saveChanges() async {
     final url = Uri.parse('$baseUrl/works/${widget.work['id']}');
 
-    // Формуємо список тегів як List<String>
+    // Припускаємо, що ці контролери/змінні вже є або будуть:
+    final coverPath = coverPathController?.text ?? '';
+// або як ти зберігаєш шлях
+    final filePath = filePathController?.text ?? '';
+    final ageLimit = int.tryParse(ageLimitController?.text ?? '') ?? 0;
+
+    final statusId = selectedStatusId; // має бути int
+
+    // Формуємо список тегів як List<String> UUID
     final tagsList = tagsController.text
         .split(',')
         .map((tag) => tag.trim())
-        .where((tag) => tag.isNotEmpty)
+        .where((tag) =>
+            RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(tag)) // залишаємо лише UUID
         .toList();
 
     final body = json.encode({
       'title': titleController.text,
       'description': descriptionController.text,
+      'cover_path': coverPath?.isNotEmpty == true ? coverPath : null,
+      'file_path': filePath,
       'category_id': selectedCategoryId,
       'tags': tagsList,
+      'age_limit': ageLimit,
+      'status_id': statusId,
     });
 
     try {
@@ -184,6 +233,41 @@ class _EditWorkPageState extends State<EditWorkPage> {
               controller: tagsController,
               decoration: const InputDecoration(
                   labelText: 'Теги (через кому, без "#")'),
+            ),
+            const SizedBox(height: 24),
+// Обкладинка
+            TextField(
+              controller: coverPathController,
+              decoration:
+                  const InputDecoration(labelText: 'Шлях до обкладинки'),
+            ),
+            const SizedBox(height: 16),
+
+// Файл з розділами
+            TextField(
+              controller: filePathController,
+              decoration: const InputDecoration(labelText: 'Шлях до файлу'),
+            ),
+            const SizedBox(height: 16),
+
+// Вікове обмеження
+            TextField(
+              controller: ageLimitController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Вікове обмеження'),
+            ),
+            const SizedBox(height: 16),
+
+// Статус твору
+            DropdownButtonFormField<int>(
+              value: selectedStatusId,
+              decoration: const InputDecoration(labelText: 'Статус твору'),
+              items: const [
+                DropdownMenuItem(value: 1, child: Text('У процесі')),
+                DropdownMenuItem(value: 2, child: Text('Завершено')),
+                // Додай за потребою більше
+              ],
+              onChanged: (value) => setState(() => selectedStatusId = value),
             ),
             const SizedBox(height: 24),
 

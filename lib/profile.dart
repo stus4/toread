@@ -192,7 +192,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildWorkItem(dynamic work) {
     final title = work['title'] ?? 'Без назви';
-    final genre = work['genre'] ?? 'Жанр не вказано';
+    final genre = work['category'] ?? 'Жанр не вказано';
     final tags = (work['tags'] as List<dynamic>?)?.join(', ') ?? 'Без тегів';
     final description = work['short_description'] ?? 'Опис відсутній';
 
