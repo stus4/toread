@@ -2,12 +2,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:toread/models/recommendation.dart';
+import 'config.dart';
 
 class RecommendationsService {
   static Future<List<Recommendation>> fetchRecommendations(
       String userId) async {
     final response = await http.get(
-      Uri.parse('http://192.168.1.2:8000/recommendations/$userId'),
+      Uri.parse('$baseUrl/recommendations/$userId'),
     );
 
     if (response.statusCode == 200) {
@@ -27,7 +28,7 @@ class RecommendationsService {
 
   static Future<List<Recommendation>> fetchPopularWorks() async {
     final response = await http.get(
-      Uri.parse('http://192.168.1.2:8000/popular'),
+      Uri.parse('$baseUrl/popular'),
     );
 
     if (response.statusCode == 200) {

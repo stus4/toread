@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'home_screen.dart';
 import 'drafts.dart';
+import 'config.dart';
 
 class ChapterInputPage extends StatefulWidget {
   final String workId;
@@ -64,7 +65,7 @@ class ChapterInputPageState extends State<ChapterInputPage> {
     final prefs = await SharedPreferences.getInstance();
     final user_id = prefs.getString('user_id');
     try {
-      final uri = Uri.parse('http://192.168.1.2:8000/chapters/').replace(
+      final uri = Uri.parse('$baseUrl/chapters/').replace(
         queryParameters: {
           'user_id': user_id,
         },

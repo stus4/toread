@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:toread/config.dart';
 
 class Recommendation {
   final String id;
@@ -46,8 +47,8 @@ class Recommendation {
 }
 
 Future<List<Recommendation>> fetchRecommendations(String userId) async {
-  final response = await http
-      .get(Uri.parse('http://192.168.170.157:8000/recommendations/$userId'));
+  final response =
+      await http.get(Uri.parse('$baseUrl/recommendations/$userId'));
 
   if (response.statusCode == 200) {
     List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
@@ -59,7 +60,7 @@ Future<List<Recommendation>> fetchRecommendations(String userId) async {
 
 Future<List<Recommendation>> fetchPopularWorks() async {
   final response = await http.get(
-    Uri.parse('http://192.168.170.157:8000/popular'),
+    Uri.parse('$baseUrl/popular'),
   );
 
   if (response.statusCode == 200) {

@@ -4,6 +4,7 @@ import 'colors.dart'; // Імпортуємо кольори
 import 'register_form.dart'; // Імпортуємо файл з валідацією
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'config.dart';
 
 class RegistrationScreen extends StatefulWidget {
   @override
@@ -52,7 +53,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
       try {
         final response = await http.post(
-          Uri.parse('http://192.168.1.2:8000/register'),
+          Uri.parse('$baseUrl/register'),
           headers: {
             'Content-Type': 'application/json',
           },

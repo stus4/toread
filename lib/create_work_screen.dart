@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'chapter_input_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'config.dart';
 
 class CreateWorkScreen extends StatefulWidget {
   @override
@@ -34,9 +35,9 @@ class _CreateWorkScreenState extends State<CreateWorkScreen> {
   Future<void> loadFormData() async {
     try {
       final responses = await Future.wait([
-        http.get(Uri.parse('http://192.168.1.2:8000/categories')),
-        http.get(Uri.parse('http://192.168.1.2:8000/tags')),
-        http.get(Uri.parse('http://192.168.1.2:8000/work-statuses')),
+        http.get(Uri.parse('$baseUrl/categories')),
+        http.get(Uri.parse('$baseUrl/tags')),
+        http.get(Uri.parse('$baseUrl/work-statuses')),
       ]);
 
       if (responses.every((res) => res.statusCode == 200)) {
@@ -137,7 +138,7 @@ class _CreateWorkScreenState extends State<CreateWorkScreen> {
                           try {
                             final response = await http.post(
                               Uri.parse(
-                                  'http://192.168.1.2:8000/works/'), // зміни URL на твій endpoint для створення твору
+                                  '$baseUrl/works/'), // зміни URL на твій endpoint для створення твору
                               headers: {'Content-Type': 'application/json'},
                               body: jsonEncode(newWorkData),
                             );

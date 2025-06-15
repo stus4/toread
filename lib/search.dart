@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'config.dart';
 
 class SearchPage extends StatefulWidget {
   @override
@@ -25,7 +26,7 @@ class _SearchPageState extends State<SearchPage> {
       isLoading = true;
     });
 
-    final url = Uri.parse('http://192.168.1.2:8000/search?title=$query');
+    final url = Uri.parse('$baseUrl/search?title=$query');
     try {
       final response = await http.get(url); // заміни localhost на IP сервера
       if (response.statusCode == 200) {

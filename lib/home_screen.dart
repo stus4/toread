@@ -8,6 +8,7 @@ import 'search.dart';
 import 'filter_dialog.dart';
 import 'account_screen.dart';
 import 'work_detail_screen.dart';
+import 'config.dart';
 
 // Заглушка для екрана сповіщень
 class NotificationsScreen extends StatelessWidget {
@@ -47,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<List<Recommendation>> fetchRecommendations(String userId) async {
     final response = await http.get(
-      Uri.parse('http://192.168.1.2:8000/recommendations/$userId'),
+      Uri.parse('$baseUrl/recommendations/$userId'),
     );
 
     if (response.statusCode == 200) {
@@ -72,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<List<Recommendation>> fetchPopularWorks() async {
     final response = await http.get(
-      Uri.parse('http://192.168.1.2:8000/popular'),
+      Uri.parse('$baseUrl/popular'),
     );
 
     if (response.statusCode == 200) {

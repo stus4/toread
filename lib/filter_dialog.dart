@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'config.dart';
 
 class FilterDialog extends StatefulWidget {
   final String? selectedFilter;
@@ -33,9 +34,9 @@ class _FilterDialogState extends State<FilterDialog> {
   Future<void> loadFormData() async {
     try {
       final responses = await Future.wait([
-        http.get(Uri.parse('http://192.168.1.2:8000/categories')),
-        http.get(Uri.parse('http://192.168.1.2:8000/tags')),
-        http.get(Uri.parse('http://192.168.1.2:8000/work-statuses')),
+        http.get(Uri.parse('$baseUrl/categories')),
+        http.get(Uri.parse('$baseUrl/tags')),
+        http.get(Uri.parse('$baseUrl/work-statuses')),
       ]);
 
       if (responses.every((res) => res.statusCode == 200)) {

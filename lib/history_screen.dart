@@ -2,7 +2,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
+import 'config.dart';
 import 'models/recommendation.dart'; // файл з класом Recommendation
 
 class HistoryScreen extends StatefulWidget {
@@ -19,7 +19,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Future<List<Recommendation>> fetchHistory(String userId) async {
     final response = await http.get(
-      Uri.parse('http://192.168.1.2:8000/history/$userId'),
+      Uri.parse('$baseUrl/history/$userId'),
     );
 
     if (response.statusCode == 200) {
