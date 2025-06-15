@@ -19,26 +19,37 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Future<List<Recommendation>> fetchHistory(String userId) async {
     final response = await http.get(
-      Uri.parse('$baseUrl/history/$userId'),
+      Uri.parse('$baseUrl/users/history/$userId'),
     );
 
     if (response.statusCode == 200) {
       final decoded = json.decode(utf8.decode(response.bodyBytes));
-      print(decoded); // подивись, що саме повертає сервер
+      print(decoded); // для дебагу
 
-      // Якщо сервер повертає масив
+      List<dynamic> data = [];
+
       if (decoded is List) {
-        return decoded.map((item) => Recommendation.fromJson(item)).toList();
-      }
-      // Якщо сервер повертає об'єкт із ключем history
-      else if (decoded is Map && decoded['history'] != null) {
-        final List<dynamic> data = decoded['history'];
-        return data.map((item) => Recommendation.fromJson(item)).toList();
-      }
-      // Якщо структура інша — повертаємо пустий список
-      else {
+        data = decoded;
+      } else if (decoded is Map && decoded['history'] != null) {
+        data = decoded['history'];
+      } else {
         return [];
       }
+
+      // Замінюємо author_user об’єкт на рядок author = username
+      final List<Map<String, dynamic>> modifiedData =
+          data.map<Map<String, dynamic>>((item) {
+        final newItem = Map<String, dynamic>.from(item);
+        if (newItem['author_user'] != null &&
+            newItem['author_user'] is Map<String, dynamic>) {
+          newItem['author'] = newItem['author_user']['username'] ?? '';
+        } else {
+          newItem['author'] = '';
+        }
+        return newItem;
+      }).toList();
+
+      return modifiedData.map((item) => Recommendation.fromJson(item)).toList();
     } else {
       throw Exception('Не вдалося завантажити історію');
     }

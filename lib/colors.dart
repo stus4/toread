@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 class AppColors {
   // Основні кольори
   static const Color primaryColor = Color(0xFF955627); // Основний колір
-  static const Color secondaryColor = Color(0xFF402430); // Допоміжний колір
+  static const Color secondaryColor =
+      Color.fromARGB(255, 79, 11, 11); // Допоміжний колір
   static const Color backgroundColor = Color(0xFFF4F4F4); // Фоновий колір
   static const Color textColor = Color(0xFF333333); // Колір тексту
   static const Color buttonColor = Color(0xFFE46A43); // Колір кнопок

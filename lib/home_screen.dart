@@ -10,6 +10,7 @@ import 'account_screen.dart';
 import 'work_detail_screen.dart';
 import 'config.dart';
 import 'profile.dart';
+import 'ideas.dart';
 
 // Заглушка для екрана сповіщень
 class NotificationsScreen extends StatelessWidget {
@@ -290,7 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
         );
 
       case 1:
-        return Center(child: Text("Ідеї"));
+        return IdeasPage();
       case 2:
         return SearchPage();
       case 3:

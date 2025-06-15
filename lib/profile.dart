@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'config.dart';
 import 'editwork.dart';
+import 'settings.dart';
 
 class ProfilePage extends StatefulWidget {
   final String userId;
@@ -50,9 +51,10 @@ class _ProfilePageState extends State<ProfilePage> {
           IconButton(
             icon: Icon(Icons.settings, color: Colors.black),
             onPressed: () {
-              // перехід до сторінки налаштувань
-              ScaffoldMessenger.of(context)
-                  .showSnackBar(SnackBar(content: Text('Налаштування')));
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
             },
           )
         ],
