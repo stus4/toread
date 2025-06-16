@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'config.dart';
 import 'editwork.dart';
 import 'settings.dart';
+import ' edit_profile.dart';
 
 class ProfilePage extends StatefulWidget {
   final String userId;
@@ -97,11 +98,20 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ),
                           ElevatedButton(
-                            onPressed: () {
-                              // перехід до редагування профілю
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                      content: Text('Редагувати профіль')));
+                            onPressed: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => EditProfilePage(
+                                    userData: userData!,
+                                    userId: widget.userId,
+                                  ),
+                                ),
+                              );
+
+                              if (result == true) {
+                                fetchUserData(); // оновити дані після редагування
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.grey[300],
@@ -112,7 +122,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                             ),
                             child: Text('Редагувати'),
-                          ),
+                          )
                         ],
                       ),
                       SizedBox(height: 20),
