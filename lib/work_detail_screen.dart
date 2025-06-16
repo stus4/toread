@@ -4,11 +4,17 @@ import 'dart:convert';
 import 'package:toread/models/recommendation.dart';
 import 'config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:toread/models/chapter.dart';
 
 class WorkDetailScreen extends StatefulWidget {
   final Recommendation work;
+  final String workId;
 
-  WorkDetailScreen({required this.work});
+  const WorkDetailScreen({
+    Key? key,
+    required this.work,
+    required this.workId,
+  }) : super(key: key);
 
   @override
   _WorkDetailScreenState createState() => _WorkDetailScreenState();
@@ -21,6 +27,9 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
   late bool isLiked;
   late bool isSaved;
   String? userId;
+  List<Chapter> chapters = [];
+
+  bool isLoadingChapters = true;
 
   @override
   void initState() {
@@ -33,6 +42,27 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
     isSaved = false; // або отримати з API
     // <- завантажує стан
     _loadUserId();
+    fetchChapters();
+  }
+
+  Future<void> fetchChapters() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/works/${widget.work.id}/chapters'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      setState(() {
+        chapters = data.map((e) => Chapter.fromJson(e)).toList();
+        isLoadingChapters = false;
+      });
+    } else {
+      print('Не вдалося завантажити розділи: ${response.statusCode}');
+      setState(() {
+        isLoadingChapters = false;
+      });
+    }
   }
 
   Future<void> _loadUserId() async {
@@ -179,8 +209,6 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
             SizedBox(height: 16),
             Text(widget.work.description),
             SizedBox(height: 24),
-
-            // Статистика з кнопками
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
@@ -203,6 +231,31 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                 _buildStatDisplay(Icons.menu_book, widget.work.read),
               ],
             ),
+            Text('Розділи:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+
+            isLoadingChapters
+                ? CircularProgressIndicator()
+                : chapters.isEmpty
+                    ? Text('Розділів немає')
+                    : ListView.separated(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: chapters.length,
+                        separatorBuilder: (_, __) => Divider(),
+                        itemBuilder: (context, index) {
+                          final chapter = chapters[index];
+                          return ListTile(
+                            title: Text(chapter.title),
+                            subtitle: Text('Розділ №${chapter.num + 1}'),
+                            onTap: () {
+                              // Навігація до конкретного розділу, якщо треба
+                            },
+                          );
+                        },
+                      ),
+
+            // Статистика з кнопками
           ],
         ),
       ),

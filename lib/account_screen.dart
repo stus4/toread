@@ -116,9 +116,9 @@ class _AccountScreenState extends State<AccountScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    WorkDetailScreen(work: workObj),
-                              ),
+                                  builder: (context) => WorkDetailScreen(
+                                      work: workObj,
+                                      workId: workObj.id.toString())),
                             );
                           },
                           child: Container(
@@ -161,9 +161,9 @@ class _AccountScreenState extends State<AccountScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    WorkDetailScreen(work: workObj),
-                              ),
+                                  builder: (context) => WorkDetailScreen(
+                                      work: workObj,
+                                      workId: workObj.id.toString())),
                             );
                           },
                           child: Container(

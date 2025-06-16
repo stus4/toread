@@ -416,7 +416,7 @@ class _HomeScreenState extends State<HomeScreen> {
             : null,
       ),
       body: openedWork != null
-          ? WorkDetailScreen(work: openedWork!)
+          ? WorkDetailScreen(work: openedWork!, workId: openedWork!.id)
           : _buildBody(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,

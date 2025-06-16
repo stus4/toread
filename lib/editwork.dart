@@ -186,7 +186,7 @@ class _EditWorkPageState extends State<EditWorkPage> {
   void addChapter() {
     // TODO: Реалізувати перехід до створення нового розділу
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Перехід до створення розділу')),
+      const SnackBar(content: Text('Пранк')),
     );
   }
 

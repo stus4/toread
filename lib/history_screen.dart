@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'config.dart';
 import 'models/recommendation.dart'; // файл з класом Recommendation
+import 'work_detail_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
   final String userId;
@@ -81,14 +82,19 @@ class _HistoryScreenState extends State<HistoryScreen> {
               itemBuilder: (context, index) {
                 final item = history[index];
                 return ListTile(
-                  title: Text(item.title),
-                  subtitle: Text(
-                      'Автор: ${item.author}\nЖанри: ${item.genres.join(", ")}'),
-                  isThreeLine: true,
-                  onTap: () {
-                    // Тут можна зробити перехід до детального перегляду твору
-                  },
-                );
+                    title: Text(item.title),
+                    subtitle: Text(
+                        'Автор: ${item.author}\nЖанри: ${item.genres.join(", ")}'),
+                    isThreeLine: true,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => WorkDetailScreen(
+                              work: item, workId: item.id.toString()),
+                        ),
+                      );
+                    });
               },
             );
           }
