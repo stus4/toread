@@ -138,7 +138,6 @@ class _IdeasPageState extends State<IdeasPage> {
               fontSize: 14,
             ),
           ),
-
           SizedBox(height: 8),
           // Description
           Text(
@@ -146,6 +145,24 @@ class _IdeasPageState extends State<IdeasPage> {
             style: TextStyle(
               fontSize: 13,
               height: 1.3,
+            ),
+          ),
+          SizedBox(height: 12),
+
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton(
+              onPressed: () {
+                print('Написати за ідеєю: ${idea['title']}');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white30,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              ),
+              child: Text('Написати'),
             ),
           ),
         ],
@@ -258,7 +275,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Ideas App',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.brown,
         fontFamily: 'Roboto',
       ),
       home: IdeasPage(),

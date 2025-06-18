@@ -1,9 +1,8 @@
-// history_screen.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'config.dart';
-import 'models/recommendation.dart'; // файл з класом Recommendation
+import 'models/recommendation.dart';
 import 'work_detail_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
