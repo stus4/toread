@@ -5,6 +5,7 @@ import 'package:toread/models/recommendation.dart';
 import '../../config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toread/models/chapter.dart';
+import 'chapter_screen.dart';
 
 class WorkDetailScreen extends StatefulWidget {
   final Recommendation work;
@@ -27,6 +28,8 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
   late bool isLiked;
   late bool isSaved;
   String? userId;
+  String? expandedChapterId; // ID розгорнутого розділу
+  Map<String, String> chapterContents = {}; // кеш тексту
   List<Chapter> chapters = [];
 
   bool isLoadingChapters = true;
@@ -47,7 +50,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
 
   Future<void> fetchChapters() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/chapters?work_id=${widget.work.id}'),
+      Uri.parse('$baseUrl/chapters/work/${widget.work.id}'), // <- правильно
     );
 
     print('STATUS: ${response.statusCode}');
@@ -82,12 +85,9 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
     if (userId == null) return;
 
     final response = await http.post(
-      Uri.parse('$baseUrl/interactions/view'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'work_id': widget.work.id,
-        'interaction_type': 'view',
-      }),
+      Uri.parse(
+        '$baseUrl/interactions/${widget.work.id}/view?user_id=$userId',
+      ),
     );
 
     if (response.statusCode == 200) {
@@ -128,11 +128,9 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
     }
 
     final response = await http.post(
-      Uri.parse('$baseUrl/interactions/${widget.work.id}/like'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        "user_id": userId,
-      }),
+      Uri.parse(
+        '$baseUrl/interactions/${widget.work.id}/like?user_id=$userId',
+      ),
     );
 
     if (response.statusCode == 200) {
@@ -145,11 +143,9 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
 
   Future<void> toggleSaved() async {
     final response = await http.post(
-      Uri.parse('$baseUrl/works/${widget.work.id}/save'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        "user_id": userId,
-      }),
+      Uri.parse(
+        '$baseUrl/interactions/${widget.work.id}/save?user_id=$userId',
+      ),
     );
 
     if (response.statusCode == 200) {
@@ -304,7 +300,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _buildStatButton(
-                    Icons.favorite_border,
+                    Icons.favorite, // активна іконка
                     likes,
                     toggleLike,
                     isLiked,
@@ -386,89 +382,131 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                         children: chapters.asMap().entries.map((entry) {
                           final index = entry.key;
                           final chapter = entry.value;
-                          return Container(
-                            margin: EdgeInsets.only(
-                                bottom: index == chapters.length - 1 ? 0 : 12),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color:
-                                      const Color(0xFF6B5B73).withOpacity(0.06),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 2),
+                          final isExpanded = expandedChapterId == chapter.id;
+
+                          return Column(
+                            children: [
+                              Container(
+                                margin: EdgeInsets.only(bottom: 0),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF6B5B73)
+                                          .withOpacity(0.06),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(12),
-                                onTap: () {
-                                  // Навігація до конкретного розділу
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 32,
-                                        height: 32,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFF0EDE6),
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            '${chapter.num + 1}',
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                              color: Color(0xFF6B5B73),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(12),
+                                    onTap: () async {
+                                      if (isExpanded) {
+                                        // Згортання
+                                        setState(() {
+                                          expandedChapterId = null;
+                                        });
+                                      } else {
+                                        // Завантажити текст, якщо ще не завантажено
+                                        if (!chapterContents
+                                            .containsKey(chapter.id)) {
+                                          final response = await http.get(Uri.parse(
+                                              '$baseUrl/chapters/item/${chapter.id}'));
+                                          if (response.statusCode == 200) {
+                                            final data =
+                                                jsonDecode(response.body);
+                                            chapterContents[chapter.id] =
+                                                data['content'] ?? '';
+                                          } else {
+                                            chapterContents[chapter.id] =
+                                                'Помилка при завантаженні розділу';
+                                          }
+                                        }
+
+                                        setState(() {
+                                          expandedChapterId = chapter.id;
+                                        });
+                                      }
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 32,
+                                            height: 32,
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFF0EDE6),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                '${chapter.num + 1}',
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Color(0xFF6B5B73),
+                                                ),
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              chapter.title,
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w500,
-                                                color: Color(0xFF5D4E75),
-                                              ),
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  chapter.title,
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: Color(0xFF5D4E75),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              'Розділ №${chapter.num + 1}',
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                color: Color(0xFF8B7D8B),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
+                                          ),
+                                          Icon(
+                                            isExpanded
+                                                ? Icons.keyboard_arrow_up
+                                                : Icons.keyboard_arrow_down,
+                                            color: const Color(0xFFB8A9C9),
+                                            size: 20,
+                                          ),
+                                        ],
                                       ),
-                                      Icon(
-                                        Icons.arrow_forward_ios,
-                                        color: const Color(0xFFB8A9C9),
-                                        size: 16,
-                                      ),
-                                    ],
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
+                              // Текст розділу під контейнером
+                              if (isExpanded)
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(16),
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF7F4F1),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                        color: const Color(0xFFEDE7E0)),
+                                  ),
+                                  child: Text(
+                                    chapterContents[chapter.id] ?? '',
+                                    style: const TextStyle(
+                                        fontSize: 16, height: 1.6),
+                                  ),
+                                ),
+                            ],
                           );
                         }).toList(),
-                      ),
+                      )
           ],
         ),
       ),

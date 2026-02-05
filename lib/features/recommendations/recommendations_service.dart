@@ -39,3 +39,23 @@ class RecommendationsService {
     }
   }
 }
+/*
+class RecommendationService {
+  static Future<List<Recommendation>> getRecommendations(String userId) async {
+    final res = await http.get(Uri.parse('$baseUrl/recommendations/$userId'));
+    final decoded = jsonDecode(utf8.decode(res.bodyBytes));
+
+    final List list =
+        decoded is List ? decoded : decoded['recommendations'] ?? [];
+
+    return list.map((e) => Recommendation.fromJson(e)).toList();
+  }
+
+  static Future<List<Recommendation>> getPopular() async {
+    final res = await http.get(Uri.parse('$baseUrl/popular'));
+    final List data = jsonDecode(utf8.decode(res.bodyBytes));
+    return data.map((e) => Recommendation.fromJson(e)).toList();
+  }
+}
+
+*/

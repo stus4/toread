@@ -14,6 +14,11 @@ class Recommendation {
   final int saved;
   final int read;
 
+  final bool isLiked;
+  final bool isSaved;
+  final bool isViewed;
+  final bool isRead;
+
   Recommendation({
     required this.id,
     required this.title,
@@ -25,12 +30,17 @@ class Recommendation {
     required this.views,
     required this.saved,
     required this.read,
+    required this.isLiked,
+    required this.isSaved,
+    required this.isViewed,
+    required this.isRead,
   });
 
   factory Recommendation.fromJson(Map<String, dynamic> json) {
     if (json['id'] == null) {
       throw Exception('Відсутній параметр id у Recommendation JSON');
     }
+
     return Recommendation(
       id: json['id'],
       title: json['title'] ?? '',
@@ -42,6 +52,12 @@ class Recommendation {
       views: json['views'] ?? 0,
       saved: json['saved'] ?? 0,
       read: json['read'] ?? 0,
+
+      // 🔥 ОСЬ ТУТ МАГІЯ
+      isLiked: json['is_liked'] ?? false,
+      isSaved: json['is_saved'] ?? false,
+      isViewed: json['is_viewed'] ?? false,
+      isRead: json['is_read'] ?? false,
     );
   }
 }

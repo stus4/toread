@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../config.dart';
+import 'work_detail_screen.dart';
+import '../../models/recommendation.dart';
 
 class SearchPage extends StatefulWidget {
   @override
@@ -9,6 +11,7 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
+  Recommendation? openedWork;
   String query = "";
   final TextEditingController _controller = TextEditingController();
   List<dynamic> results = [];
@@ -287,126 +290,139 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget _buildWorkCard(Map<String, dynamic> work) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0xFF8B4513).withOpacity(0.1),
-            blurRadius: 8,
-            offset: Offset(0, 2),
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () {
+        final openedWork = Recommendation.fromJson(work);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                WorkDetailScreen(work: openedWork, workId: openedWork.id),
           ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Column(
-          children: [
-            // Header with title and author
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Color(0xFFE8DCC0),
-                    Color(0xFFF0ECE8),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    work['title'] ?? 'Без назви',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF8B4513),
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.person_outline,
-                        size: 16,
-                        color: Color(0xFF8B4513).withOpacity(0.7),
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        'Автор: ${work['author'] ?? 'Невідомий'}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF8B4513).withOpacity(0.8),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // Content
-            Padding(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Description
-                  if (work['description'] != null &&
-                      work['description'].toString().isNotEmpty) ...[
-                    _buildInfoRow(
-                      Icons.description_outlined,
-                      'Опис',
-                      work['description'],
-                    ),
-                    SizedBox(height: 12),
-                  ],
-
-                  // Status
-                  _buildInfoRow(
-                    Icons.info_outline,
-                    'Статус',
-                    work['status'] ?? 'Невідомо',
-                  ),
-                  SizedBox(height: 12),
-
-                  // Categories
-                  if (work['categories'] != null &&
-                      (work['categories'] as List).isNotEmpty) ...[
-                    _buildTagsRow(
-                      Icons.category_outlined,
-                      'Категорії',
-                      (work['categories'] as List<dynamic>)
-                          .map((e) => e.toString())
-                          .toList(),
-                      Color(0xFFE8DCC0),
-                    ),
-                    SizedBox(height: 12),
-                  ],
-
-                  // Tags
-                  if (work['tags'] != null &&
-                      (work['tags'] as List).isNotEmpty) ...[
-                    _buildTagsRow(
-                      Icons.tag,
-                      'Теги',
-                      (work['tags'] as List<dynamic>)
-                          .map((e) => e.toString())
-                          .toList(),
-                      Color(0xFFF0ECE8),
-                    ),
-                  ],
-                ],
-              ),
+        );
+      },
+      child: Container(
+        margin: EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Color(0xFF8B4513).withOpacity(0.1),
+              blurRadius: 8,
+              offset: Offset(0, 2),
             ),
           ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Column(
+            children: [
+              // Header with title and author
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color(0xFFE8DCC0),
+                      Color(0xFFF0ECE8),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      work['title'] ?? 'Без назви',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF8B4513),
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.person_outline,
+                          size: 16,
+                          color: Color(0xFF8B4513).withOpacity(0.7),
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'Автор: ${work['author'] ?? 'Невідомий'}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF8B4513).withOpacity(0.8),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Content
+              Padding(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Description
+                    if (work['description'] != null &&
+                        work['description'].toString().isNotEmpty) ...[
+                      _buildInfoRow(
+                        Icons.description_outlined,
+                        'Опис',
+                        work['description'],
+                      ),
+                      SizedBox(height: 12),
+                    ],
+
+                    // Status
+                    _buildInfoRow(
+                      Icons.info_outline,
+                      'Статус',
+                      work['status'] ?? 'Невідомо',
+                    ),
+                    SizedBox(height: 12),
+
+                    // Categories
+                    if (work['categories'] != null &&
+                        (work['categories'] as List).isNotEmpty) ...[
+                      _buildTagsRow(
+                        Icons.category_outlined,
+                        'Категорії',
+                        (work['categories'] as List<dynamic>)
+                            .map((e) => e.toString())
+                            .toList(),
+                        Color(0xFFE8DCC0),
+                      ),
+                      SizedBox(height: 12),
+                    ],
+
+                    // Tags
+                    if (work['tags'] != null &&
+                        (work['tags'] as List).isNotEmpty) ...[
+                      _buildTagsRow(
+                        Icons.tag,
+                        'Теги',
+                        (work['tags'] as List<dynamic>)
+                            .map((e) => e.toString())
+                            .toList(),
+                        Color(0xFFF0ECE8),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
