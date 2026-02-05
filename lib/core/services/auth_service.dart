@@ -2,7 +2,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'config.dart';
+import '../../config.dart';
 
 class AuthService {
   Future<String?> login(String email, String password) async {

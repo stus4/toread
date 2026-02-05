@@ -37,7 +37,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   image_picker: ^1.1.0
-  file_picker: ^5.2.5 
+  file_picker: ^10.2.0 
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -64,6 +64,12 @@ flutter:
    - assets/images/second.png 
    - assets/images/third.png 
    - assets/images/last.png
+   - assets/logodark.png
+   - assets/logo.png
+   - assets/wave_top_1.png
+   - assets/wave_top_2.png
+   - assets/wave_bottom_1.png
+   - assets/wave_bottom_2.png
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

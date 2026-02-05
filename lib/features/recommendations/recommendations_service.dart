@@ -2,7 +2,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:toread/models/recommendation.dart';
-import 'config.dart';
+import '../../config.dart';
 
 class RecommendationsService {
   static Future<List<Recommendation>> fetchRecommendations(
