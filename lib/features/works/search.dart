@@ -297,9 +297,8 @@ class _SearchPageState extends State<SearchPage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                WorkDetailScreen(work: openedWork, workId: openedWork.id),
-          ),
+              builder: (_) =>
+                  WorkDetailScreen(work: openedWork!, workId: openedWork!.id)),
         );
       },
       child: Container(

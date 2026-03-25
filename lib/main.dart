@@ -1,20 +1,30 @@
 import 'package:flutter/material.dart';
-//import 'database_service.dart'; // імпортуємо новий файл
+import 'package:shared_preferences/shared_preferences.dart';
 import 'features/home/welcome_screen.dart';
+import 'features/home/home_screen.dart';
 
-void main() {
-  runApp(MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final prefs = await SharedPreferences.getInstance();
+  final userId = prefs.getString('user_id');
+
+  runApp(MyApp(userId: userId));
 }
 
 class MyApp extends StatelessWidget {
+  final String? userId;
+
+  const MyApp({required this.userId});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Перевірка БД',
+      title: '2read',
       theme: ThemeData(
-        fontFamily: 'Roboto', // або інший шрифт, який підтримує кирилицю
+        fontFamily: 'Roboto',
       ),
-      home: WelcomeScreen(),
+      home: userId != null ? HomeScreen(userId: userId!) : WelcomeScreen(),
     );
   }
 }
