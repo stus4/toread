@@ -42,18 +42,18 @@ class Recommendation {
     }
 
     return Recommendation(
-      id: json['id'],
+      // Використовуйте .toString(), щоб уникнути помилок, якщо ID прийде як число
+      id: json['id'].toString(),
       title: json['title'] ?? '',
       author: json['author'] ?? '',
-      genres: List<String>.from(json['genres'] ?? []),
+      // Перевіряємо обидва варіанти ключа: 'genres' та 'categories'
+      genres: List<String>.from(json['genres'] ?? json['categories'] ?? []),
       tags: List<String>.from(json['tags'] ?? []),
       description: json['description'] ?? '',
       likes: json['likes'] ?? 0,
       views: json['views'] ?? 0,
       saved: json['saved'] ?? 0,
       read: json['read'] ?? 0,
-
-      // 🔥 ОСЬ ТУТ МАГІЯ
       isLiked: json['is_liked'] ?? false,
       isSaved: json['is_saved'] ?? false,
       isViewed: json['is_viewed'] ?? false,

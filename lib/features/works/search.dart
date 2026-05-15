@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../config.dart';
 import 'work_detail_screen.dart';
-import '../../models/recommendation.dart';
+import '../../models/recommendation.dart'; // Імпортуємо єдину модель
 
 class SearchPage extends StatefulWidget {
   @override
@@ -11,10 +11,10 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  Recommendation? openedWork;
   String query = "";
   final TextEditingController _controller = TextEditingController();
-  List<dynamic> results = [];
+  // Змінюємо тип списку на Recommendation для типізації даних
+  List<Recommendation> results = [];
   bool isLoading = false;
 
   Future<void> searchWorks(String query) async {
@@ -31,20 +31,19 @@ class _SearchPageState extends State<SearchPage> {
 
     final url = Uri.parse('$baseUrl/search?title=$query');
     try {
-      final response = await http.get(url); // заміни localhost на IP сервера
+      final response = await http.get(url);
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
         setState(() {
-          results = data;
+          // Перетворюємо кожен елемент JSON на об'єкт моделі Recommendation
+          results = data.map((item) => Recommendation.fromJson(item)).toList();
         });
       } else {
-        // Обробка помилки від сервера
         setState(() {
           results = [];
         });
       }
     } catch (e) {
-      // Обробка помилки з мережею
       setState(() {
         results = [];
       });
@@ -69,7 +68,7 @@ class _SearchPageState extends State<SearchPage> {
         padding: EdgeInsets.all(20),
         child: Column(
           children: [
-            // Search Field Container
+            // Поле пошуку
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -96,26 +95,15 @@ class _SearchPageState extends State<SearchPage> {
                     size: 24,
                   ),
                   suffixIcon: query.isNotEmpty
-                      ? Container(
-                          margin: EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Color(0xFF8B4513).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: IconButton(
-                            icon: Icon(
-                              Icons.clear,
-                              color: Color(0xFF8B4513),
-                              size: 20,
-                            ),
-                            onPressed: () {
-                              _controller.clear();
-                              setState(() {
-                                query = "";
-                                results = [];
-                              });
-                            },
-                          ),
+                      ? IconButton(
+                          icon: Icon(Icons.clear, color: Color(0xFF8B4513)),
+                          onPressed: () {
+                            _controller.clear();
+                            setState(() {
+                              query = "";
+                              results = [];
+                            });
+                          },
                         )
                       : null,
                   border: OutlineInputBorder(
@@ -131,10 +119,6 @@ class _SearchPageState extends State<SearchPage> {
                     borderSide: BorderSide(color: Color(0xFF8B4513), width: 2),
                   ),
                 ),
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF5D4037),
-                ),
                 onChanged: (value) {
                   setState(() {
                     query = value;
@@ -143,10 +127,7 @@ class _SearchPageState extends State<SearchPage> {
                 },
               ),
             ),
-
             SizedBox(height: 24),
-
-            // Results Area
             Expanded(
               child: _buildResultsArea(),
             ),
@@ -158,147 +139,59 @@ class _SearchPageState extends State<SearchPage> {
 
   Widget _buildResultsArea() {
     if (isLoading) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF8B4513)),
-              strokeWidth: 3,
-            ),
-            SizedBox(height: 16),
-            Text(
-              'Пошук...',
-              style: TextStyle(
-                color: Color(0xFF8B4513),
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      );
+      return Center(child: CircularProgressIndicator(color: Color(0xFF8B4513)));
     }
 
     if (query.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Color(0xFF8B4513).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(50),
-              ),
-              child: Icon(
-                Icons.search,
-                size: 48,
-                color: Color(0xFF8B4513).withOpacity(0.5),
-              ),
-            ),
-            SizedBox(height: 16),
-            Text(
-              'Введіть текст для пошуку',
-              style: TextStyle(
-                color: Color(0xFF8B4513).withOpacity(0.7),
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Почніть вводити назву твору, автора або теги',
-              style: TextStyle(
-                color: Color(0xFF8B4513).withOpacity(0.5),
-                fontSize: 14,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      );
+      return _buildEmptyState(Icons.search, 'Введіть текст для пошуку');
     }
 
     if (results.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Color(0xFF8B4513).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(50),
-              ),
-              child: Icon(
-                Icons.search_off,
-                size: 48,
-                color: Color(0xFF8B4513).withOpacity(0.5),
-              ),
-            ),
-            SizedBox(height: 16),
-            Text(
-              'Результатів не знайдено',
-              style: TextStyle(
-                color: Color(0xFF8B4513).withOpacity(0.7),
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Спробуйте змінити пошуковий запит',
-              style: TextStyle(
-                color: Color(0xFF8B4513).withOpacity(0.5),
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
-      );
+      return _buildEmptyState(Icons.search_off, 'Результатів не знайдено');
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Results Header
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-          child: Text(
-            'Знайдено результатів: ${results.length}',
-            style: TextStyle(
-              color: Color(0xFF8B4513),
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+        Text(
+          'Знайдено результатів: ${results.length}',
+          style:
+              TextStyle(color: Color(0xFF8B4513), fontWeight: FontWeight.bold),
         ),
-        SizedBox(height: 8),
-
-        // Results List
+        SizedBox(height: 12),
         Expanded(
           child: ListView.builder(
             itemCount: results.length,
-            itemBuilder: (context, index) {
-              return _buildWorkCard(results[index]);
-            },
+            itemBuilder: (context, index) => _buildWorkCard(results[index]),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildWorkCard(Map<String, dynamic> work) {
+  Widget _buildEmptyState(IconData icon, String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 48, color: Color(0xFF8B4513).withOpacity(0.3)),
+          SizedBox(height: 16),
+          Text(message,
+              style: TextStyle(color: Color(0xFF8B4513).withOpacity(0.7))),
+        ],
+      ),
+    );
+  }
+
+  // Оновлений метод картки, що використовує об'єкт Recommendation
+  Widget _buildWorkCard(Recommendation work) {
     return InkWell(
-      borderRadius: BorderRadius.circular(16),
       onTap: () {
-        final openedWork = Recommendation.fromJson(work);
         Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (_) =>
-                  WorkDetailScreen(work: openedWork!, workId: openedWork!.id)),
+            builder: (_) => WorkDetailScreen(work: work, workId: work.id),
+          ),
         );
       },
       child: Container(
@@ -308,215 +201,87 @@ class _SearchPageState extends State<SearchPage> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Color(0xFF8B4513).withOpacity(0.1),
-              blurRadius: 8,
-              offset: Offset(0, 2),
-            ),
+                color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
           ],
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Column(
-            children: [
-              // Header with title and author
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Color(0xFFE8DCC0),
-                      Color(0xFFF0ECE8),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      work['title'] ?? 'Без назви',
-                      style: TextStyle(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Color(0xFFE8DCC0).withOpacity(0.3),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    work.title, // Доступ через властивість об'єкта
+                    style: TextStyle(
                         fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF8B4513),
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.person_outline,
-                          size: 16,
-                          color: Color(0xFF8B4513).withOpacity(0.7),
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          'Автор: ${work['author'] ?? 'Невідомий'}',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF8B4513).withOpacity(0.8),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF8B4513)),
+                  ),
+                  Text('Автор: ${work.author}',
+                      style: TextStyle(color: Colors.brown)),
+                ],
               ),
-
-              // Content
-              Padding(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Description
-                    if (work['description'] != null &&
-                        work['description'].toString().isNotEmpty) ...[
-                      _buildInfoRow(
-                        Icons.description_outlined,
-                        'Опис',
-                        work['description'],
-                      ),
-                      SizedBox(height: 12),
-                    ],
-
-                    // Status
-                    _buildInfoRow(
-                      Icons.info_outline,
-                      'Статус',
-                      work['status'] ?? 'Невідомо',
-                    ),
-                    SizedBox(height: 12),
-
-                    // Categories
-                    if (work['categories'] != null &&
-                        (work['categories'] as List).isNotEmpty) ...[
-                      _buildTagsRow(
-                        Icons.category_outlined,
-                        'Категорії',
-                        (work['categories'] as List<dynamic>)
-                            .map((e) => e.toString())
-                            .toList(),
-                        Color(0xFFE8DCC0),
-                      ),
-                      SizedBox(height: 12),
-                    ],
-
-                    // Tags
-                    if (work['tags'] != null &&
-                        (work['tags'] as List).isNotEmpty) ...[
-                      _buildTagsRow(
-                        Icons.tag,
-                        'Теги',
-                        (work['tags'] as List<dynamic>)
-                            .map((e) => e.toString())
-                            .toList(),
-                        Color(0xFFF0ECE8),
-                      ),
-                    ],
-                  ],
-                ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  if (work.description.isNotEmpty)
+                    _buildInfoRow(Icons.description, 'Опис', work.description),
+                  if (work.genres.isNotEmpty)
+                    _buildTagsRow(Icons.category, 'Жанри', work.genres,
+                        Color(0xFFE8DCC0)),
+                  if (work.tags.isNotEmpty)
+                    _buildTagsRow(
+                        Icons.tag, 'Теги', work.tags, Color(0xFFF0ECE8)),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          margin: EdgeInsets.only(top: 2),
-          child: Icon(
-            icon,
-            size: 16,
-            color: Color(0xFF8B4513).withOpacity(0.7),
-          ),
-        ),
-        SizedBox(width: 8),
-        Expanded(
-          child: RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: '$label: ',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF8B4513),
-                  ),
-                ),
-                TextSpan(
-                  text: value,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF5D4037),
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 16, color: Colors.brown),
+          SizedBox(width: 8),
+          Expanded(
+              child: Text('$label: $value', style: TextStyle(fontSize: 14))),
+        ],
+      ),
     );
   }
 
   Widget _buildTagsRow(
-      IconData icon, String label, List<String> tags, Color chipColor) {
+      IconData icon, String label, List<String> tags, Color color) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: Color(0xFF8B4513).withOpacity(0.7),
-            ),
-            SizedBox(width: 8),
-            Text(
-              '$label:',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF8B4513),
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 6),
+        Row(children: [Icon(icon, size: 16), SizedBox(width: 8), Text(label)]),
+        SizedBox(height: 4),
         Wrap(
           spacing: 6,
-          runSpacing: 6,
           children: tags
-              .map((tag) => Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: chipColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Color(0xFF8B4513).withOpacity(0.2),
-                        width: 1,
-                      ),
-                    ),
-                    child: Text(
-                      tag,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF8B4513),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+              .map((tag) => Chip(
+                    label: Text(tag, style: TextStyle(fontSize: 12)),
+                    backgroundColor: color,
+                    visualDensity: VisualDensity.compact,
                   ))
               .toList(),
         ),
+        SizedBox(height: 8),
       ],
     );
   }
