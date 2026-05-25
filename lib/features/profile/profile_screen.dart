@@ -4,6 +4,8 @@ import 'dart:convert';
 import '../../config.dart';
 import '../works/edit_work_screen.dart';
 import '../home/settings.dart';
+import '../../core/services/auth_service.dart';
+import '../auth/login_screen.dart';
 
 class ProfilePage extends StatefulWidget {
   final String userId;
@@ -16,7 +18,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   Map<String, dynamic>? userData;
-
+  final AuthService _authService = AuthService();
   @override
   void initState() {
     super.initState();
@@ -125,7 +127,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       children: [
                         Row(
                           children: [
-                            // Стильний аватар
+                            // Аватар
                             Container(
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
@@ -152,6 +154,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                             ),
                             SizedBox(width: 20),
+
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,7 +171,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                   SizedBox(height: 8),
                                   Container(
                                     padding: EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 6),
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: Colors.white.withOpacity(0.7),
                                       borderRadius: BorderRadius.circular(16),
@@ -188,46 +193,71 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ],
                         ),
+
                         SizedBox(height: 24),
-                        // Кнопка редагування
-                        Container(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Редагувати профіль'),
+
+                        // Редагування + Logout кнопки
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Редагувати профіль'),
+                                      backgroundColor: Color(0xFF8B6F47),
+                                    ),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
                                   backgroundColor: Color(0xFF8B6F47),
+                                  foregroundColor: Colors.white,
+                                  elevation: 4,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  padding: EdgeInsets.symmetric(vertical: 14),
                                 ),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFF8B6F47),
-                              foregroundColor: Colors.white,
-                              elevation: 4,
-                              shadowColor: Colors.black.withOpacity(0.3),
-                              shape: RoundedRectangleBorder(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.edit, size: 18),
+                                    SizedBox(width: 8),
+                                    Text('Редагувати профіль'),
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                            SizedBox(width: 12),
+
+                            // 🔴 LOGOUT BUTTON
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(16),
                               ),
-                              padding: EdgeInsets.symmetric(vertical: 14),
+                              child: IconButton(
+                                icon: Icon(Icons.logout, color: Colors.red),
+                                onPressed: () async {
+                                  await _authService.logout();
+
+                                  if (!mounted) return;
+
+                                  Navigator.of(context).pushAndRemoveUntil(
+                                    MaterialPageRoute(
+                                      builder: (_) => LoginScreen(),
+                                    ),
+                                    (route) => false,
+                                  );
+                                },
+                              ),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.edit, size: 18),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Редагувати профіль',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          ],
                         ),
+
                         SizedBox(height: 24),
+
                         // Статистика
                         Container(
                           padding: EdgeInsets.all(20),
@@ -251,20 +281,18 @@ class _ProfilePageState extends State<ProfilePage> {
                                 Icons.people,
                               ),
                               Container(
-                                height: 40,
-                                width: 1,
-                                color: Color(0xFFD4C4B0),
-                              ),
+                                  width: 1,
+                                  height: 40,
+                                  color: Color(0xFFD4C4B0)),
                               _buildStatColumn(
                                 userData!['following'].toString(),
                                 'Відстежується',
                                 Icons.person_add,
                               ),
                               Container(
-                                height: 40,
-                                width: 1,
-                                color: Color(0xFFD4C4B0),
-                              ),
+                                  width: 1,
+                                  height: 40,
+                                  color: Color(0xFFD4C4B0)),
                               _buildStatColumn(
                                 userData!['works_count'].toString(),
                                 'Твори',
@@ -276,8 +304,10 @@ class _ProfilePageState extends State<ProfilePage> {
                       ],
                     ),
                   ),
+
                   SizedBox(height: 16),
-                  // Заголовок творів
+
+                  // Твори
                   Container(
                     margin: EdgeInsets.symmetric(horizontal: 16),
                     padding: EdgeInsets.all(20),
@@ -303,11 +333,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                 color: Color(0xFF8B6F47).withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: Icon(
-                                Icons.library_books,
-                                color: Color(0xFF8B6F47),
-                                size: 20,
-                              ),
+                              child: Icon(Icons.library_books,
+                                  color: Color(0xFF8B6F47), size: 20),
                             ),
                             SizedBox(width: 12),
                             Text(
@@ -330,8 +357,10 @@ class _ProfilePageState extends State<ProfilePage> {
                       ],
                     ),
                   ),
+
                   SizedBox(height: 16),
-                  // Список творів
+
+                  // список творів
                   Container(
                     margin: EdgeInsets.symmetric(horizontal: 16),
                     child: ListView.builder(
@@ -358,6 +387,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       },
                     ),
                   ),
+
                   SizedBox(height: 20),
                 ],
               ),

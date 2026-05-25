@@ -41,4 +41,36 @@ class SecurityApi {
 
     return res.bodyBytes;
   }
+
+  Future<Map<String, dynamic>> verify2FALogin(
+    String userId,
+    String code,
+  ) async {
+    final res = await http.post(
+      Uri.parse(
+        '$baseUrl/2fa/verify-login?user_id=$userId&code=$code',
+      ),
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception("Failed to verify 2FA login");
+    }
+
+    return jsonDecode(res.body);
+  }
+
+  Future<void> enable2FA(
+    String userId,
+    String code,
+  ) async {
+    final res = await http.post(
+      Uri.parse(
+        '$baseUrl/2fa/enable?user_id=$userId&code=$code',
+      ),
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception("Failed to enable 2FA");
+    }
+  }
 }

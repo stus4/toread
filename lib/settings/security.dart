@@ -45,6 +45,11 @@ class _SecurityScreenState extends State<SecurityScreen> {
   bool _showOld = false;
   bool _showNew = false;
   bool _showConfirm = false;
+  bool _show2FAVerification = false;
+
+  final TextEditingController _codeController = TextEditingController();
+
+  Uint8List? _qrImage;
 
   final SecurityApi api = SecurityApi(baseUrl);
 
@@ -52,26 +57,14 @@ class _SecurityScreenState extends State<SecurityScreen> {
   bool _loading2FA = true;
   String? _userId;
 
-  // Fake sessions — replace with real API call
+  // розхардкодити колись
   final List<_Session> _sessions = const [
     _Session(
         icon: Icons.phone_iphone,
-        name: 'iPhone 15 Pro',
-        location: 'Київ, Україна',
+        name: 'iPhone 67 Pro',
+        location: 'Вашингтон, Україна',
         time: 'зараз',
         isCurrent: true),
-    _Session(
-        icon: Icons.laptop_mac,
-        name: 'MacBook Pro',
-        location: 'Львів, Україна',
-        time: '2 год тому',
-        isCurrent: false),
-    _Session(
-        icon: Icons.tablet_mac,
-        name: 'iPad Air',
-        location: 'Варшава, Польща',
-        time: '3 дні тому',
-        isCurrent: false),
   ];
 
   @override
@@ -96,17 +89,40 @@ class _SecurityScreenState extends State<SecurityScreen> {
 
   Future<void> _enable2FA() async {
     if (_userId == null) return;
+
     final Uint8List qr = await api.setup2FA(_userId!);
-    if (!mounted) return;
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Скануйте QR-код'),
-        content: Image.memory(qr),
-      ),
-    );
-    await _load2FAStatus();
+
+    setState(() {
+      _qrImage = qr;
+      _show2FAVerification = false;
+    });
+  }
+
+  Future<void> _verify2FA() async {
+    if (_userId == null) return;
+
+    try {
+      await api.enable2FA(
+        _userId!,
+        _codeController.text.trim(),
+      );
+
+      _codeController.clear();
+
+      setState(() {
+        _show2FAVerification = false;
+        _qrImage = null;
+      });
+
+      await _load2FAStatus();
+
+      _showSnack('2FA успішно увімкнено');
+    } catch (e) {
+      _showSnack(
+        'Невірний код підтвердження',
+        isError: true,
+      );
+    }
   }
 
   Future<void> _disable2FA() async {
@@ -269,7 +285,6 @@ class _SecurityScreenState extends State<SecurityScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                   child: Row(
                     children: [
-                      // Status badge
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 5),
@@ -315,7 +330,9 @@ class _SecurityScreenState extends State<SecurityScreen> {
                     ],
                   ),
                 ),
+
                 const SizedBox(height: 10),
+
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
@@ -329,7 +346,9 @@ class _SecurityScreenState extends State<SecurityScreen> {
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 14),
+
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: _is2FAEnabled == true
@@ -346,6 +365,70 @@ class _SecurityScreenState extends State<SecurityScreen> {
                           onPressed: _enable2FA,
                         ),
                 ),
+
+                // ================= QR FLOW =================
+
+                if (_qrImage != null) ...[
+                  const SizedBox(height: 20),
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: _border),
+                      ),
+                      child: Image.memory(
+                        _qrImage!,
+                        width: 180,
+                        height: 180,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (!_show2FAVerification)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _PrimaryButton(
+                        label: 'Я відсканував QR-код',
+                        icon: Icons.check_circle_outline,
+                        onPressed: () {
+                          setState(() {
+                            _show2FAVerification = true;
+                          });
+                        },
+                      ),
+                    ),
+                  if (_show2FAVerification) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: TextField(
+                        controller: _codeController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Код з автентифікатора',
+                          prefixIcon: const Icon(Icons.password),
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _PrimaryButton(
+                        label: 'Підтвердити 2FA',
+                        icon: Icons.verified,
+                        onPressed: _verify2FA,
+                      ),
+                    ),
+                  ],
+                ],
+
                 const SizedBox(height: 16),
               ],
             ),

@@ -5,6 +5,7 @@ import '../../core/styles/app_styles.dart'; // Імпортуємо всі ст�
 import '../../core/styles/colors.dart';
 import 'register_screen.dart'; // Імпортуємо екран реєстрації
 import '../../core/services/auth_service.dart'; // Імпортуємо AuthService
+import 'two_factor_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -26,23 +27,30 @@ class _LoginScreenState extends State<LoginScreen> {
       });
 
       try {
-        final userId = await AuthService().login(
+        final result = await AuthService().login(
           _emailController.text,
           _passwordController.text,
         );
 
-        if (userId != null) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => SplashScreen(userId: userId),
-            ),
-          );
-        } else {
-          setState(() {
-            error = 'Невірний логін або пароль';
-            isLoading = false;
-          });
+        if (result != null) {
+          final userId = result['userId'];
+          final need2fa = result['need2fa'];
+
+          if (need2fa == true) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => TwoFactorScreen(userId: userId),
+              ),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SplashScreen(userId: userId),
+              ),
+            );
+          }
         }
       } catch (e) {
         setState(() {

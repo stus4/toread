@@ -5,7 +5,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../config.dart';
 
 class AuthService {
-  Future<String?> login(String email, String password) async {
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('user_id');
+  }
+
+  Future<Map<String, dynamic>?> login(
+    String email,
+    String password,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/login'),
@@ -16,40 +24,35 @@ class AuthService {
         }),
       );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success'] == true && data['userId'] != null) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('user_id', data['userId'].toString());
-          return data['userId'].toString(); // Повертаємо userId
-        } else {
-          throw Exception('Сервер не повернув userId');
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        final prefs = await SharedPreferences.getInstance();
+
+        final userId = data['userId'].toString();
+        final need2fa = data['need_2fa'] ?? false;
+
+        // ⚠️ НЕ зберігаємо user_id якщо є 2FA
+        if (!need2fa) {
+          await prefs.setString('user_id', userId);
         }
-      } else if (response.statusCode == 401) {
-        // Обробка 401 — невірні дані
-        try {
-          final data = json.decode(response.body);
-          throw Exception(data['detail'] ?? 'Невірні логін або пароль');
-        } catch (_) {
-          final message = utf8.decode(response.bodyBytes, allowMalformed: true);
-          throw Exception('Помилка авторизації: $message');
-        }
-      } else {
-        // Інші коди помилок
-        String message;
-        try {
-          message = json.decode(response.body)['detail'] ?? response.body;
-        } catch (_) {
-          message = utf8.decode(response.bodyBytes, allowMalformed: true);
-        }
-        throw Exception(
-            'Сервер повернув помилку ${response.statusCode}: $message');
+
+        return {
+          'userId': userId,
+          'need2fa': need2fa,
+          'message': data['message'],
+        };
       }
+
+      if (response.statusCode == 401) {
+        throw Exception(data['detail'] ?? 'Невірні дані');
+      }
+
+      throw Exception(data['message'] ?? 'Помилка входу');
     } on SocketException {
-      throw Exception(
-          'Помилка з’єднання: сервер недоступний або відсутнє інтернет-з’єднання.');
+      throw Exception('Немає зʼєднання з сервером');
     } catch (e) {
-      throw Exception('Помилка зʼєднання або обробки запиту: $e');
+      throw Exception('Помилка: $e');
     }
   }
 }
